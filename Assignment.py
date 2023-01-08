@@ -156,6 +156,110 @@ pd_combined.insert(0,"TeamKey", game_key_pdc)
 print(pd_combined)
 
 
+# In[84]:
+
+
+#Webscrape from below URL to get additional information
+
+source = urllib.request.urlopen('https://www.skysports.com/nfl/news/34693/10735320/list-of-nfl-super-bowl-winners').read()
+soup = bs.BeautifulSoup(source,'lxml')
+
+table = soup.table
+table = soup.find('table')
+table_rows = table.find_all('tr')
+for tr in table_rows:
+    td = tr.find_all('td')
+    row = [i.text for i in td]
+    
+dfws = pd.read_html(str(table))[0]
+print(type(dfws))
+
+
+# In[85]:
+
+
+#Format data types
+dfws = dfws.astype({
+    'Year' : 'int',
+    'Winner' : 'string',
+    'Runner Up' : 'string'
+})
+
+print(dfws)
+
+
+# In[86]:
+
+
+#Get GameID for dfws data frame
+season = []
+winners_short = []
+game_key = []
+
+irow = 0
+name_long = ""
+champion = ""
+for row1 in dfws.itertuples():
+    #Superbowl happens in calendar year of prior season so new column is needed
+    name_long = dfws.iloc[irow]['Winner']
+    if name_long == "Tampa Bay Buccaneers":
+        winners_short.append("TAM")
+        champion = "TAM"
+    elif name_long == "New England Patriots":
+        winners_short.append("NWE")
+        champion = "NWE"
+    elif name_long == "Denver Broncos":
+        winners_short.append("DEN")
+        champion = "DEN"
+    elif name_long == "Indianapolis Colts":
+        winners_short.append("IND")
+        champion = "IND"
+    else:
+        winners_short.append("Default")
+        champion = ""
+   
+    winners_short_tuple = tuple(winners_short)
+   
+    yearvalue = dfws.iloc[irow]['Year']
+    irow = irow +1
+    newseason = yearvalue-1
+    season.append(newseason)
+
+    teamkey = str(champion)+str(yearvalue)
+    game_key.append(teamkey)
+
+    game_key_tuple = tuple(game_key)
+
+
+# In[87]:
+
+
+print(dfws)
+
+
+# In[88]:
+
+
+#Drop pointless columns
+dfws = dfws.drop(columns=['Number','Attendance','Location','Winners Share','Final Score'])
+
+
+# In[89]:
+
+
+print(dfws)
+
+
+# In[90]:
+
+
+dfws.insert(1,"Season", season)
+dfws.insert(2,"Name_Short", winners_short)
+dfws.insert(0,"Team_key", game_key_tuple)
+
+print(game_key_tuple)
+
+
 # In[ ]:
 
 
